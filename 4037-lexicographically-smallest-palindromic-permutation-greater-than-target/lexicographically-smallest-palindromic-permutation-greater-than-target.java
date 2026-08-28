@@ -1,148 +1,133 @@
-
 class Solution {
     public String lexPalindromicPermutation(String s, String target) {
         int n = s.length();
 
-        int[] freq = new int[26];
-
-        for (char c : s.toCharArray()) {
-            freq[c - 'a']++;
+        
+        int[] cnt = new int[26];
+        for (char ch : s.toCharArray()) {
+            cnt[ch - 'a']++;
         }
 
-        int odd = 0;
-        int center = -1;
+       
+        int oddCount = 0;
+        char middle = 0;
 
         for (int i = 0; i < 26; i++) {
-            if (freq[i] % 2 == 1) {
-                odd++;
-                center = i;
+            if (cnt[i] % 2 == 1) {
+                oddCount++;
+                middle = (char) ('a' + i);
             }
         }
 
-        if (odd > 1) {
+        if (oddCount > 1) {
             return "";
         }
 
-    
         int halfLen = n / 2;
-        int[] halfFreq = new int[26];
 
+        int[] halfCnt = new int[26];
         for (int i = 0; i < 26; i++) {
-            halfFreq[i] = freq[i] / 2;
+            halfCnt[i] = cnt[i] / 2;
         }
 
         String targetHalf = target.substring(0, halfLen);
 
-       
-        if (canForm(targetHalf, halfFreq)) {
+        int[] temp = halfCnt.clone();
+        boolean possible = true;
 
-            String candidate = buildPalindrome(targetHalf, center, n);
+        for (int i = 0; i < halfLen; i++) {
+            int x = targetHalf.charAt(i) - 'a';
+
+            if (temp[x] == 0) {
+                possible = false;
+                break;
+            }
+
+            temp[x]--;
+        }
+
+        if (possible) {
+            String half = targetHalf;
+
+            StringBuilder palindrome = new StringBuilder();
+            palindrome.append(half);
+
+            if (n % 2 == 1) {
+                palindrome.append(middle);
+            }
+
+            palindrome.append(new StringBuilder(half).reverse());
+
+            String candidate = palindrome.toString();
 
             if (candidate.compareTo(target) > 0) {
                 return candidate;
             }
         }
-        String nextHalf = nextGreater(targetHalf, halfFreq);
 
-        if (nextHalf == null) {
-            return "";
-        }
+        for (int pivot = halfLen - 1; pivot >= 0; pivot--) {
 
-        return buildPalindrome(nextHalf, center, n);
-    }
-
-    
-    private boolean canForm(String targetHalf, int[] freq) {
-        int[] used = new int[26];
-
-        for (char c : targetHalf.toCharArray()) {
-            int x = c - 'a';
-
-            used[x]++;
-
-            if (used[x] > freq[x]) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    private String nextGreater(String targetHalf, int[] freq) {
-        int m = targetHalf.length();
-        for (int pos = m - 1; pos >= 0; pos--) {
-
-            int[] used = new int[26];
-            boolean possiblePrefix = true;
+            int[] available = halfCnt.clone();
 
           
-            for (int i = 0; i < pos; i++) {
-                int x = targetHalf.charAt(i) - 'a';
-                used[x]++;
+            boolean prefixPossible = true;
 
-                if (used[x] > freq[x]) {
-                    possiblePrefix = false;
+            for (int i = 0; i < pivot; i++) {
+                int x = targetHalf.charAt(i) - 'a';
+
+                if (available[x] == 0) {
+                    prefixPossible = false;
                     break;
                 }
+
+                available[x]--;
             }
 
-            if (!possiblePrefix) {
+            if (!prefixPossible) {
                 continue;
             }
 
-            int current = targetHalf.charAt(pos) - 'a';
+          
+            int targetChar = targetHalf.charAt(pivot) - 'a';
 
-            for (int c = current + 1; c < 26; c++) {
+            for (int ch = targetChar + 1; ch < 26; ch++) {
 
-                if (used[c] < freq[c]) {
+                if (available[ch] > 0) {
 
-                    StringBuilder result = new StringBuilder();
+                    available[ch]--;
 
-                   
-                    for (int i = 0; i < pos; i++) {
-                        result.append(targetHalf.charAt(i));
-                    }
+                    StringBuilder half = new StringBuilder();
 
-         
-                    result.append((char) ('a' + c));
+                    
+                    half.append(targetHalf, 0, pivot);
 
-                    int[] remaining = freq.clone();
+                 
+                    half.append((char) ('a' + ch));
 
-                    for (int i = 0; i < pos; i++) {
-                        remaining[targetHalf.charAt(i) - 'a']--;
-                    }
-
-                    remaining[c]--;
-
-                    for (int x = 0; x < 26; x++) {
-                        while (remaining[x] > 0) {
-                            result.append((char) ('a' + x));
-                            remaining[x]--;
+                    for (int k = 0; k < 26; k++) {
+                        while (available[k] > 0) {
+                            half.append((char) ('a' + k));
+                            available[k]--;
                         }
                     }
 
-                    return result.toString();
+                   
+                    String left = half.toString();
+
+                    StringBuilder palindrome = new StringBuilder();
+                    palindrome.append(left);
+
+                    if (n % 2 == 1) {
+                        palindrome.append(middle);
+                    }
+
+                    palindrome.append(new StringBuilder(left).reverse());
+
+                    return palindrome.toString();
                 }
             }
         }
 
-        return null;
-    }
-
-    private String buildPalindrome(String half, int center, int n) {
-        StringBuilder result = new StringBuilder();
-
-        result.append(half);
-
-        if (n % 2 == 1) {
-            result.append((char) ('a' + center));
-        }
-
-      
-        for (int i = half.length() - 1; i >= 0; i--) {
-            result.append(half.charAt(i));
-        }
-
-        return result.toString();
+        return "";
     }
 }
